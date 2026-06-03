@@ -17,7 +17,7 @@ class SyntacticObject:
 class LexicalItem(SyntacticObject):
     """
     Initial set SO_0 consisting of lexical items and syntactic features.
-    Marcolli et al. : 1.1 / Section 2.1
+    (Marcolli et al. : 1.1 / Section 2.1)
     """
     label: str
 
@@ -26,7 +26,7 @@ class ComplexSO(SyntacticObject):
     """
     A complex SO formed by the binary Merge operation M(α, β) = {α, β}.
     This represents an element in a free, non-associative, commutative magma.
-    Marcolli et al. : Definition 2.1 / (2.1) / (2.2)
+    (Marcolli et al. : Definition 2.1 / (2.1) / (2.2))
     """
     left: SyntacticObject
     right: SyntacticObject
@@ -35,7 +35,7 @@ class ComplexSO(SyntacticObject):
         """
         Implements commutativity (non-planarity).
         The unordered set {α, β} is identical to {β, α}.
-        Marcolli et al. : Section 2.1.1 / Remark 2.2
+        (Marcolli et al. : Section 2.1.1 / Remark 2.2)
         """
         # Ensure a canonical order to represent an unordered set {left, right}
         if self.left > self.right:
@@ -46,7 +46,8 @@ class ComplexSO(SyntacticObject):
         """
         Accessible terms are proper nonempty subsets of the SO.
         In tree terms, these are subtrees rooted at internal (non-root) vertices.
-        Marcolli et al. : Definition 2.4 / (2.5)
+        Acc(T) = {L_v = L(T_v) |v ∈ V_int(T)}.
+        (Marcolli et al. : Definition 2.4 / (2.5))
         """
         terms = set()
         # For a binary tree {α, β}, α and β are the primary accessible terms
@@ -65,7 +66,7 @@ class Workspace:
     """
     A Workspace (WS) is a finite multiset of Syntactic Objects.
     Mathematically identified as a binary non-planar forest.
-    Marcolli et al. : Definition 2.3 / (2.4)
+    (Marcolli et al. : Definition 2.3 / (2.4))
     """
     items: List[SyntacticObject]
 
@@ -73,7 +74,7 @@ class Workspace:
     def b0(self) -> int:
         """
         The number of connected components (trees) in the forest.
-        Marcolli et al. : (2.7)
+        (Marcolli et al. : (2.7))
         """
         return len(self.items)
 
@@ -81,7 +82,7 @@ class Workspace:
     def num_acc(self) -> int:
         """
         The total number of accessible terms in the workspace.
-        Marcolli et al. : (2.6) / (2.7)
+        (Marcolli et al. : (2.6) / (2.7))
         """
         total = 0
         for item in self.items:
@@ -94,7 +95,7 @@ class Workspace:
         """
         Workspace size σ(F), defined as the sum of SOs and accessible terms.
         σ(F) := b0(F) + #Acc(F) = #V(F) (total vertices).
-        Marcolli et al. : (2.8)
+        (Marcolli et al. : (2.8))
         """
         return self.b0 + self.num_acc
 
@@ -103,18 +104,39 @@ class Workspace:
         """
         The conserved counting function σ̂(F).
         σ̂(F) := b0(F) + σ(F)
-        Marcolli et al. : (2.9)
+        (Marcolli et al. : (2.9))
         """
         return self.b0 + self.sigma
 
 def external_merge(ws: Workspace, alpha: SyntacticObject, beta: SyntacticObject) -> Workspace:
     """
-    External Merge (EM) combines two separate trees into one.
-    Results: b0 decreases by 1, #Acc increases by 2, σ increases by 1, σ̂ is conserved.
-    Marcolli et al. : Lemma 2.11 / Proposition 2.17
+    Implements External Merge (EM) as a forest-level operation.
+    Mathematically: F' = {alpha, beta} ⊔ (F \ {alpha, beta}).
+    (Marcolli et al. : Section 2.4.1 / Lemma 2.11)
     """
+    # 1. Verification of EM Condition:
+    # Alpha and beta must be distinct connected components (trees) of the forest.
+    # Marcolli et al. : Case (1) Section 2.4.1 / Lemma 2.11
+    if alpha not in ws.items or beta not in ws.items:
+        raise ValueError("Both alpha and beta must be independent trees in the workspace.")
+
+    # 2. Forest Manipulation:
+    # Create a new list (multiset) of trees.
+    # The forest structure allows repeated copies (repetitions).
+    # Marcolli et al. : Definition 2.3 / [3]
     new_items = list(ws.items)
+    
+    # 3. Removal of Components:
+    # Removing two trees decreases the component count (b0) by 2.
+    # Marcolli et al. : Proposition 2.17 / [4]
     new_items.remove(alpha)
     new_items.remove(beta)
-    new_items.append(ComplexSO(alpha, beta))
+    
+    # 4. Binary Set Formation:
+    # Creating M(alpha, beta) = {alpha, beta} as a single tree component.
+    # This adds 1 back to b0, resulting in a net change of -1.
+    # Marcolli et al. : (1.1) / (2.2) / [4]
+    merged_object = ComplexSO(alpha, beta)
+    new_items.append(merged_object)
+    
     return Workspace(new_items)
