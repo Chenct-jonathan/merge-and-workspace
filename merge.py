@@ -1,142 +1,73 @@
 # A python library dedicated to visualize the mathematical structure of syntactic merge.
 # Project based mainly on Chomsky 2019a, Chomsky 2019b, Fong et al. 2024 and Marcolli et al. 2023. 
 
-from dataclasses import dataclass
-from typing import List, Set, Union
-
-@dataclass(frozen=True)
-class SyntacticObject:
-    """
-    Base class for Syntactic Objects (SO).
-    Mathematically identified as binary, non-planar, rooted trees.
-    (Marcolli et al. 2023 : Remark 2.2/(2.3))
-    """
-    pass
-
-@dataclass(frozen=True, order=True)
-class LexicalItem(SyntacticObject):
-    """
-    Initial set SO_0 consisting of lexical items and syntactic features.
-    (Marcolli et al. : 1.1 / Section 2.1)
-    """
-    label: str
-
-@dataclass(frozen=True)
-class ComplexSO(SyntacticObject):
-    """
-    A complex SO formed by the binary Merge operation M(α, β) = {α, β}.
-    This represents an element in a free, non-associative, commutative magma.
-    (Marcolli et al. : Definition 2.1 / (2.1) / (2.2))
-    """
-    left: SyntacticObject
-    right: SyntacticObject
-
-    def __post_init__(self):
-        """
-        Implements commutativity (non-planarity).
-        The unordered set {α, β} is identical to {β, α}.
-        (Marcolli et al. : Section 2.1.1 / Remark 2.2)
-        """
-        # Ensure a canonical order to represent an unordered set {left, right}
-        if self.left > self.right:
-            object.__setattr__(self, 'left', self.right)
-            object.__setattr__(self, 'right', self.left)
-
-    def get_accessible_terms(self) -> Set[SyntacticObject]:
-        """
-        Accessible terms are proper nonempty subsets of the SO.
-        In tree terms, these are subtrees rooted at internal (non-root) vertices.
-        Acc(T) = {L_v = L(T_v) |v ∈ V_int(T)}.
-        (Marcolli et al. : Definition 2.4 / (2.5))
-        """
-        terms = set()
-        # For a binary tree {α, β}, α and β are the primary accessible terms
-        terms.add(self.left)
-        terms.add(self.right)
-        
-        # Recursively collect terms from deeper internal nodes
-        if isinstance(self.left, ComplexSO):
-            terms.update(self.left.get_accessible_terms())
-        if isinstance(self.right, ComplexSO):
-            terms.update(self.right.get_accessible_terms())
-        return terms
-
-@dataclass
-class Workspace:
-    """
-    A Workspace (WS) is a finite multiset of Syntactic Objects.
-    Mathematically identified as a binary non-planar forest.
-    (Marcolli et al. : Definition 2.3 / (2.4))
-    """
-    items: List[SyntacticObject]
-
-    @property
-    def b0(self) -> int:
-        """
-        The number of connected components (trees) in the forest.
-        (Marcolli et al. : (2.7))
-        """
-        return len(self.items)
-
-    @property
-    def num_acc(self) -> int:
-        """
-        The total number of accessible terms in the workspace.
-        (Marcolli et al. : (2.6) / (2.7))
-        """
-        total = 0
-        for item in self.items:
-            if isinstance(item, ComplexSO):
-                total += len(item.get_accessible_terms())
-        return total
-
-    @property
-    def sigma(self) -> int:
-        """
-        Workspace size σ(F), defined as the sum of SOs and accessible terms.
-        σ(F) := b0(F) + #Acc(F) = #V(F) (total vertices).
-        (Marcolli et al. : (2.8))
-        """
-        return self.b0 + self.num_acc
-
-    @property
-    def sigma_hat(self) -> int:
-        """
-        The conserved counting function σ̂(F).
-        σ̂(F) := b0(F) + σ(F)
-        (Marcolli et al. : (2.9))
-        """
-        return self.b0 + self.sigma
+from typing import List, Optional, Set, Tuple, Union
+from mathematical_structure import SyntacticObject, LexicalItem, ComplexSO, Workspace 
+from pprint import pprint
+from vis import visualize
 
 def external_merge(ws: Workspace, alpha: SyntacticObject, beta: SyntacticObject) -> Workspace:
     """
-    Implements External Merge (EM) as a forest-level operation.
-    Mathematically: F' = {alpha, beta} ⊔ (F \ {alpha, beta}).
-    (Marcolli et al. : Section 2.4.1 / Lemma 2.11)
+    External Merge (EM): Joins two distinct trees from the workspace.
+    Effect: b0 decreases by 1, #Acc increases by 2, sigma increases by 1.
+    (Marcolli et al. 2023: Lemma 2.11 / Proposition 2.17)
     """
-    # 1. Verification of EM Condition:
-    # Alpha and beta must be distinct connected components (trees) of the forest.
-    # Marcolli et al. : Case (1) Section 2.4.1 / Lemma 2.11
     if alpha not in ws.items or beta not in ws.items:
-        raise ValueError("Both alpha and beta must be independent trees in the workspace.")
+        raise ValueError("EM requires two distinct trees in the workspace.")
 
-    # 2. Forest Manipulation:
-    # Create a new list (multiset) of trees.
-    # The forest structure allows repeated copies (repetitions).
-    # Marcolli et al. : Definition 2.3 / [3]
     new_items = list(ws.items)
-    
-    # 3. Removal of Components:
-    # Removing two trees decreases the component count (b0) by 2.
-    # Marcolli et al. : Proposition 2.17 / [4]
     new_items.remove(alpha)
     new_items.remove(beta)
+    new_items.append(ComplexSO(alpha, beta))
+    return Workspace(tuple(new_items))
     
-    # 4. Binary Set Formation:
-    # Creating M(alpha, beta) = {alpha, beta} as a single tree component.
-    # This adds 1 back to b0, resulting in a net change of -1.
-    # Marcolli et al. : (1.1) / (2.2) / [4]
-    merged_object = ComplexSO(alpha, beta)
-    new_items.append(merged_object)
+def internal_merge(ws: Workspace, tree: ComplexSO, term: SyntacticObject) -> Workspace:
+    """
+    Internal Merge (IM): Extracts an accessible term and merges it at the root.
+    Implemented as the composition of extraction and re-merging with the quotient.
+    Effect: All counting functions (b0, #Acc, sigma) remain constant.
+    (Marcolli et al. 2023: Proposition 2.12 / Proposition 2.17)
+    """
+    if term not in tree.get_accessible_terms():
+        raise ValueError("Term is not accessible within the selected tree.")
+
+    # Cancellation of the deeper copy via the quotient map T/term.
+    # (Marcolli et al. 2023: Section 2.5.2)
+    quotient_tree = tree.quotient(term)
+    pprint(quotient_tree)
     
-    return Workspace(new_items)
+    # Internal Merge results in M(term, tree/term).
+    new_so = ComplexSO(term, quotient_tree)
+
+    new_items = list(ws.items)
+    new_items.remove(tree)
+    new_items.append(new_so)
+    #pprint(new_items)
+    return Workspace(set(new_items))
+
+
+if __name__ == "__main__":
+    a, b, c = LexicalItem("a"), LexicalItem("b"), LexicalItem("c")
+    ws0 = Workspace((a, b, c))
+    
+    # External Merge
+    ws1 = external_merge(ws0, b, c)
+    print()
+    print()    
+    print("ws1:")
+    pprint(ws1)
+    
+    # External Merge
+    ws2 = external_merge(ws1, a, ws1.items[-1])
+    print()
+    print()
+    print("ws2:")
+    pprint(ws2)
+    visualize([ws0, ws1, ws2])
+
+    # Internal Merge
+    ws3 = internal_merge(ws2, ws2.items[0], ws1.items[-1])
+    #pprint(ws3)
+    #visualize_derivation([ws3])
+    #print(f"Internal Merge Result: {ws3.items}")
+    print(f"Sigma conservation check: {ws2.sigma} == {ws3.sigma}")
