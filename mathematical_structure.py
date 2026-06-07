@@ -76,7 +76,7 @@ class ComplexSO(SyntacticObject):
         if self == target:
             # T/T = 1, where 1 is the multiplicative unit (empty tree).
             # (Marcolli et al. 2023: Section 2.2)
-            print("T/T = 1")
+            print("!!! Quotient: T/T = 1")
             return None 
 
         # Edge Contraction: Removing a branch and maintaining binary structure.
