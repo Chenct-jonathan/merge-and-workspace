@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Set, Tuple, Union
+from pprint import pprint
 
 @dataclass(frozen=True)
 class SyntacticObject:
@@ -76,14 +77,13 @@ class ComplexSO(SyntacticObject):
         if self == target:
             # T/T = 1, where 1 is the multiplicative unit (empty tree).
             # (Marcolli et al. 2023: Section 2.2)
-            print("!!! Quotient: T/T = 1")
             return None 
 
         # Edge Contraction: Removing a branch and maintaining binary structure.
         # For binary trees, the quotient of a child is its sibling (Marcolli et al. 2023: Lemma 2.6).
         if len(self.elements) == 2:
-            if self.elements == target: return self.elements[1]
-            if self.elements[1] == target: return self.elements
+            if self.elements[0] == target: return self.elements[1]
+            if self.elements[1] == target: return self.elements[0]
 
         # Recursive search and contraction for deeper copies.
         new_children = []

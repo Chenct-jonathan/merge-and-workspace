@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import time
 from typing import List
 from mathematical_structure import SyntacticObject, LexicalItem, Workspace
 
@@ -22,13 +23,13 @@ def draw_tree(so: SyntacticObject, ax, x=0, y=0, dx=1, dy=1):
     ax.plot([x, x + dx], [y, y - dy], 'k-')
     draw_tree(right, ax, x + dx, y - dy, dx/2, dy)
 
-def visualize(ws_list: List[Workspace]):
+def visualize(ws_list: List[Workspace], block_show:bool=False):
     """Display the WS forest structure at each step of the derivation."""
     fig, axes = plt.subplots(1, len(ws_list), figsize=(5 * len(ws_list), 5))
     if len(ws_list) == 1: axes = [axes]
     
     for i, (ws, ax) in enumerate(zip(ws_list, axes)):
-        ax.set_title(f"Step {i}: $\sigma$={ws.sigma}")
+        ax.set_title(f"Step {i}: $b_0$={ws.b0}, #ACC={ws.num_acc}, $\sigma$={ws.sigma}")
         ax.set_xlim(-4, 4)
         ax.set_ylim(-3, 1)
         ax.axis('off')
@@ -38,4 +39,6 @@ def visualize(ws_list: List[Workspace]):
         for j, item in enumerate(ws.items):
             draw_tree(item, ax, x=-4 + (j + 1) * spacing, y=0)
     plt.tight_layout()
-    plt.show()
+    plt.show(block=block_show)
+    plt.pause(5)
+    plt.close()
