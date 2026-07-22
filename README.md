@@ -47,7 +47,9 @@ MERGE terminated at Layer 5!
 * `{{v, {C, {{INFL, 牛排}, 張三}}}, 吃}` --> blocked
 * `{v, {{C, 吃}, {{INFL, 牛排}, 張三}}}` --> blocked
 
---- 5. Externalization, EXT() (currently) checks with the input sentence.
+--- 
+
+### 5. Externalization, EXT() (currently) checks with the input sentence.
 * `{C, {INFL, {張三, {v, {吃, 牛排}}}}}`
 * `{C, {INFL, {牛排, {v, {吃, 張三}}}}}` --> blocked
 
