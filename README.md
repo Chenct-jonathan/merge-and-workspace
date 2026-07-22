@@ -36,3 +36,18 @@ MERGE terminated at Layer 5!
 * `{v, {{{C, {INFL, 吃}}, 張三}, 牛排}}`
 * `{{v, {C, {{INFL, 牛排}, 張三}}}, 吃}`
 * `{v, {{C, 吃}, {{INFL, 牛排}, 張三}}}`
+
+---
+
+### 4. C-I Interface, INT() act as a filter, theta-configuration, feature checking. 
+
+* `{{{{C, {INFL, v}}, 張三}, 吃}, 牛排}` --> blocked
+* `{C, {{v, 張三}, {{INFL, 牛排}, 吃}}}` --> blocked
+* `{v, {{{C, {INFL, 吃}}, 張三}, 牛排}}` --> blocked
+* `{{v, {C, {{INFL, 牛排}, 張三}}}, 吃}` --> blocked
+* `{v, {{C, 吃}, {{INFL, 牛排}, 張三}}}` --> blocked
+
+--- 5. Externalization, EXT() (currently) checks with the input sentence.
+* `{C, {INFL, {張三, {v, {吃, 牛排}}}}}`
+* `{C, {INFL, {牛排, {v, {吃, 張三}}}}}` --> blocked
+
