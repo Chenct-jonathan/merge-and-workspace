@@ -21,7 +21,7 @@ class LexicalItem:
 
     def __repr__(self) -> str:
         '''
-        Semantic features are not visible in Narrow Syntax.
+        Semantic features are irrelevant at MERGE/Narrow Syntax.
         '''
         syntax_driven = sorted(list(self.formal_feature))
         feature_suffix = f"[{','.join(syntax_driven)}]" if syntax_driven else ""
@@ -32,6 +32,7 @@ SyntacticObject: TypeAlias = Union[LexicalItem, Tuple['SyntacticObject', 'Syntac
 LexicalArray: TypeAlias = FrozenSet[LexicalItem]
 Workspace: TypeAlias = FrozenSet[SyntacticObject]
 
+# Representation tools
 def format_so(so, show_features: bool = True) -> str:
     '''
     To avoid non-reader-friendly representations of examples invloving category-determining heads. (Marantz 2006)
