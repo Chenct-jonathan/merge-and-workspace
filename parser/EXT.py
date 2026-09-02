@@ -6,7 +6,7 @@ from typing import Any, List, Tuple, Set
 from ArticutAPI import Articut
 articut = Articut()
 
-from syntax_types import LexicalItem, LexicalArray
+from syntax_types import *
 from LEX import LEXICON
 from pprint import pprint
 
@@ -42,11 +42,11 @@ def EXT_to_LA(articut_pos: List[Tuple[str, str]]) -> LexicalArray:
            '√吃'})
     '''
     print("\n=========================")
-    print("           LEX")
+    print("      LEXICAL ARRAY")
     print("=========================")    
     la_elements = set()
     
-    # We the input sentence is a grammatical sentence for now.
+    # We assume the input sentence is a grammatical sentence for now.
     # We therefore add C and INFL automatically. (Chomsky 2000, 2001)
     la_elements.add(LexicalItem(**LEXICON["C"]))
     la_elements.add(LexicalItem(**LEXICON["INFL"]))
