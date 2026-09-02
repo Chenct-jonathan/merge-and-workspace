@@ -17,7 +17,7 @@ LEXICON: Dict[str, dict] = {
     "v": {
         "form": "v",
         "phase_head": True,
-        "formal_feature": frozenset({"uθ,uθ"}) # a bit of a trick here, set cllapse identical elements.
+        "formal_feature": frozenset({"uθ,uθ"}) # a bit of a trick here, set collapse identical elements.
     },
     "INFL": {
         "form": "INFL",
